@@ -1,6 +1,4 @@
-﻿// server.cpp : Этот файл содержит функцию "main". Здесь начинается и заканчивается выполнение программы.
-//
-
+﻿
 #undef UNICODE
 
 #define WIN32_LEAN_AND_MEAN
@@ -12,6 +10,10 @@
 #include <stdio.h>
 #include <vector>
 #include <iostream>
+#include <typeinfo>
+#include "Player.h"
+#include <string>
+#include <string_view>
 
 // Need to link with Ws2_32.lib
 #pragma comment (lib, "Ws2_32.lib")
@@ -25,9 +27,9 @@
 
 
 
-int connectionToClients(std::vector<SOCKET> &ClientsSockets, int numberOfPlayers) {
+int connectionToClients(WSADATA &wsaData ,std::vector<SOCKET> &sockets, int numberOfPlayers) {
 
-    WSADATA wsaData;
+    
     int iResult;
 
     SOCKET ListenSocket = INVALID_SOCKET;
@@ -35,16 +37,6 @@ int connectionToClients(std::vector<SOCKET> &ClientsSockets, int numberOfPlayers
 
     struct addrinfo* result = NULL;
     struct addrinfo hints;
-
-    int iSendResult;
-    /*    char recvbuf[DEFAULT_BUFLEN];
-        int recvbuflen = DEFAULT_BUFLEN;*/
-
-    char recvbuf[1];
-    int recvbuflen = 1;
-
-    char sendbuf[1];
-    int sendbuflen = 1;
 
     // Initialize Winsock
     iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -103,14 +95,14 @@ int connectionToClients(std::vector<SOCKET> &ClientsSockets, int numberOfPlayers
 
 
 
-    ClientsSockets.clear();
-    while (ClientsSockets.size() != 3) {
+    sockets.clear();
+    while (sockets.size() != numberOfPlayers) {
         // Accept a client socket
         ClientSocket = accept(ListenSocket, NULL, NULL);
 
 
-        if (std::find(ClientsSockets.begin(), ClientsSockets.end(), ClientSocket) == ClientsSockets.end()) {
-            ClientsSockets.push_back(ClientSocket);
+        if (std::find(sockets.begin(), sockets.end(), ClientSocket)== sockets.end()) {
+            sockets.push_back(ClientSocket);
         }
 
 
@@ -123,7 +115,7 @@ int connectionToClients(std::vector<SOCKET> &ClientsSockets, int numberOfPlayers
         }
 
 
-        std::cout << "\n\n" << ClientsSockets.size() << " of " << numberOfPlayers << "\n\n";
+        std::cout << "\n\n" << sockets.size() << " of " << numberOfPlayers << "\n\n";
 
     }
     // No longer need server socket
@@ -132,20 +124,112 @@ int connectionToClients(std::vector<SOCKET> &ClientsSockets, int numberOfPlayers
     return 0;
 }
 
+void rand_mix(std::vector<int>& arr) {
+    //подключаем windows.h
+    SYSTEMTIME tm;
+    GetLocalTime(&tm);
+    srand(tm.wMilliseconds);
+    for (int i = 0; i < arr.size(); i++)
+    {
+        int change_pos = i + (rand()) % (arr.size() - i);
+        int tmp = arr[i];
+        arr[i] = arr[change_pos];
+        arr[change_pos] = tmp;
+    }
+}
+
+std::vector<int> setRoles(int numberOfPlayers) {
+    std::vector<int> roles;
+    switch (numberOfPlayers)
+    {
+    case 2:
+        roles={ 3,1 };
+        break;
+    case 4:
+        roles = { 3,1,0,0 };
+        break;
+    case 5:
+        roles = { 3,3,1,0,0 };
+        break;
+    case 6:
+        roles = { 3,3,2,1,0,0 };
+        break;
+    case 7:
+        roles = { 3,3,3,2,1,0,0 };
+        break;
+    }
+    rand_mix(roles);
+    return roles;
+}
 
 
+int sendInfoAboutStartingGame(const std::vector<SOCKET>& sockets, std::vector<Player>& players, int numberOfPlayers) {
+    int recvHosts = 0;
+    int iResult;
+    int iSendResult;
+    /*    char recvbuf[DEFAULT_BUFLEN];
+        int recvbuflen = DEFAULT_BUFLEN;*/
+
+    int recvBuf_len = 255;
+    char* recvBuf = new char[recvBuf_len];
+    int id = 0;
+    std::string sendBuf;
+    std::vector roles = setRoles(numberOfPlayers);
+
+    for (auto ClientSocket : sockets) {
+        iResult = recv(ClientSocket, recvBuf, recvBuf_len, 0);
+        if (iResult > 0) {
+            players.push_back(Player(recvBuf, id, ClientSocket, roles[id]));
+            sendBuf="sa"+std::to_string(numberOfPlayers)+"r"+std::to_string(roles[id++])+"i0";
+        }
+        else {
+                printf("recv failed with error: %d\n", WSAGetLastError());
+                closesocket(ClientSocket);
+                WSACleanup();
+                return 1;
+        }
+
+     
+        iSendResult = send(ClientSocket, sendBuf.c_str(), sendBuf.size(), 0);
+        if (iSendResult == SOCKET_ERROR) {
+            printf("send failed with error: %d\n", WSAGetLastError());
+            closesocket(ClientSocket);
+            WSACleanup();
+            return 1;
+        }
+    }
+    
+    return 0;
+}
 
 
 int __cdecl main(void)
 {
+   
 
-    std::vector<SOCKET> clientsSocets;
+    std::vector<SOCKET> sockets;
+    std::vector<Player> players;
 
-    if (connectionToClients(clientsSocets, 3) != 0) return 1;
+    int numberOfPlayers=2;
+    //std::cin >> numberOfPlayers;
+    //while (numberOfPlayers > 7 || numberOfPlayers < 4 || typeid(numberOfPlayers) != typeid(int)) {
+    //    std::cout << "Wrong input\n";
+    //    std::cin >> numberOfPlayers;
+    //}
 
-    std::cout << "start game";
+    WSADATA wsaData;
+   
+    if (connectionToClients(wsaData,sockets, numberOfPlayers) != 0) return 1;
 
-    // Receive until the peer shuts down the connection
+    if (sendInfoAboutStartingGame(sockets, players, numberOfPlayers) != 0) return 1;
+
+    std::cout << "start game\n";
+
+    for (auto player : players) {
+        std::cout << player.getPlayerName() << "\n";
+    }
+
+    //// Receive until the peer shuts down the connection
     //do {
     //
     //    iResult = recv(ClientSocket, recvbuf, recvbuflen, 0);
@@ -219,9 +303,9 @@ int __cdecl main(void)
     //}
     //
     //// cleanup
+    //
 
-
-    for (auto ClientSocket : clientsSocets) {
+    for (auto ClientSocket : sockets) {
         closesocket(ClientSocket);
     }
     WSACleanup();
