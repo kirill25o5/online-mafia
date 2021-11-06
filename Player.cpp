@@ -1,6 +1,7 @@
 #include "Player.h"
 
-Player::Player(const std::string &userNmae, int id):playerName(userNmae), playerID(id)
+
+Player::Player(const std::string &userNmae, int id, SOCKET ClientSocket):playerName(userNmae), playerID(id), ClientSocket(ClientSocket), statusID(0)
 {}
 
 const std::string& Player::getPlayerName()
@@ -11,4 +12,9 @@ const std::string& Player::getPlayerName()
 int Player::getPlayerID()
 {
 	return playerID;
+}
+
+const SOCKET& Player::getSocket()
+{
+	return ClientSocket;
 }
