@@ -23,7 +23,7 @@ int StartUpClient(int argc, char** argv, struct addrinfo* result, struct addrinf
     int iResult;
 
     // Validate the parameters
-    if (argc != 2) {
+    if (argc != 3) {
         printf("usage: %s server-name\n", argv[0]);
         return 1;
     }
@@ -80,8 +80,6 @@ int StartUpClient(int argc, char** argv, struct addrinfo* result, struct addrinf
     }
     else{
         printf("Connection is created!\n");
-        //WSACleanup();
-        return 0;
     }
 
 
@@ -89,6 +87,16 @@ int StartUpClient(int argc, char** argv, struct addrinfo* result, struct addrinf
 
 
     return 0;
+}
+
+void check_send_warning(int result) {
+    if (result > 0) {
+        printf("Bytes send: %d\n", result);
+    }
+    else if (result == 0)
+        printf("Connection closed\n");
+    else
+        printf("send failed with error: %d\n", WSAGetLastError());
 }
 
 int __cdecl main(int argc, char** argv)
@@ -100,19 +108,31 @@ int __cdecl main(int argc, char** argv)
         * ptr = NULL,
         hints;
     
-    int sendbuf_len = 3;
+    int sendbuf_len = 7;
     char* sendbuf = new char[sendbuf_len];
 
-    int recvbuf_len = 3;
+    int recvbuf_len = 7;
     char* recvbuf = new char[recvbuf_len];
 
     int iResult;
 
     StartUpClient(argc, argv, result, ptr, &hints, &wsaData,&ConnectSocket);
 
-    
+    // Соединившись с сервером, передаем ему имя пользователя игрока
+    int name_len = strlen(argv[2]);
+    char* send_name = new char[name_len + 1];
+    for (int i = 0; i < name_len; i++)
+    {
+        send_name[i] = argv[2][i];
+    }
+    send_name[name_len] = 0;
+    iResult = send(ConnectSocket, send_name, name_len+1, 0);
+    delete[] send_name;
+    check_send_warning(iResult);
+
+
     // Ждем сообщения о начале игры
-    int num_of_players = -1;
+    int num_of_players = -1 , my_role = -1, my_status = -1;
     bool is_game_begin = false;
     do {
 
@@ -123,6 +143,8 @@ int __cdecl main(int argc, char** argv)
             {
                 is_game_begin = true;
                 num_of_players = recvbuf[2] - 48;
+                my_role = recvbuf[4] - 48;
+                my_status = recvbuf[6] - 48;
                 for (int i = 0; i < recvbuf_len; i++)
                 {
                     std::cout << recvbuf[i];
@@ -143,6 +165,10 @@ int __cdecl main(int argc, char** argv)
         sendbuf[0] = 's';
         sendbuf[1] = 'a';
         sendbuf[2] = num_of_players + 48;
+        sendbuf[3] = 'r';
+        sendbuf[4] = my_role + 48;
+        sendbuf[5] = 'i';
+        sendbuf[6] = my_status + 48;
 
         for (int i = 0; i < sendbuf_len; i++)
         {
@@ -150,13 +176,7 @@ int __cdecl main(int argc, char** argv)
         }
         iResult = send(ConnectSocket, sendbuf, sendbuf_len, 0);
 
-        if (iResult > 0) {
-            printf("Bytes send: %d\n", iResult);
-        }
-        else if (iResult == 0)
-            printf("Connection closed\n");
-        else
-            printf("send failed with error: %d\n", WSAGetLastError());
+        check_send_warning(iResult);
 
     }
 
