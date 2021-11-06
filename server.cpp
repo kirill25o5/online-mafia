@@ -92,7 +92,17 @@ int __cdecl main(void)
     }
 
     // Accept a client socket
-    ClientSocket = accept(ListenSocket, NULL, NULL);
+    sockaddr_in cs_addr; //или SOCKADDR_IN cs_addr;
+    socklen_t cs_addrsize = sizeof(cs_addr); //или int cs_addrsize = sizeof(cs_addr);
+    
+
+
+    
+    
+    ClientSocket = accept(ListenSocket, (struct sockaddr*) &cs_addr, &cs_addrsize);
+
+
+
     if (ClientSocket == INVALID_SOCKET) {
         printf("accept failed with error: %d\n", WSAGetLastError());
         closesocket(ListenSocket);
@@ -109,7 +119,7 @@ int __cdecl main(void)
         iResult = recv(ClientSocket, recvbuf, recvbuflen, 0);
         if (iResult > 0) {
             printf("Bytes received: %d\n", iResult);
-
+            printf("from IP %d\n", cs_addr.sin_addr);
             // Echo the buffer back to the sender
             /*iSendResult = send(ClientSocket, recvbuf, iResult, 0);
             if (iSendResult == SOCKET_ERROR) {
@@ -130,7 +140,7 @@ int __cdecl main(void)
             std::cout << '\n';
             printf("Bytes sent: %d\n", iResult);
 
-
+            std::cout << '\n';
         }
         else if (iResult == 0)
             printf("Connection closing...\n");
