@@ -18,19 +18,9 @@
 #define DEFAULT_BUFLEN 512
 #define DEFAULT_PORT "27015"
 
+int StartUpClient(int argc, char** argv, struct addrinfo* result, struct addrinfo* ptr, struct addrinfo* hints, WSADATA* wsaData, SOCKET *ConnectSocket) {
 
-
-int __cdecl main(int argc, char** argv)
-{
-    WSADATA wsaData;
-    SOCKET ConnectSocket = INVALID_SOCKET;
-    struct addrinfo* result = NULL,
-        * ptr = NULL,
-        hints;
-    const char* sendbuf = "d";
-    char recvbuf[1];
     int iResult;
-    int recvbuflen = 1;
 
     // Validate the parameters
     if (argc != 2) {
@@ -39,12 +29,12 @@ int __cdecl main(int argc, char** argv)
     }
 
     // Initialize Winsock
-    iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+    iResult = WSAStartup(MAKEWORD(2, 2), wsaData);
     if (iResult != 0) {
         printf("WSAStartup failed with error: %d\n", iResult);
         return 1;
     }
-    
+
     ZeroMemory(&hints, sizeof(hints));
     /*hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
@@ -52,7 +42,7 @@ int __cdecl main(int argc, char** argv)
 
 
     // Resolve the server address and port
-    iResult = getaddrinfo(argv[1], DEFAULT_PORT, &hints, &result);
+    iResult = getaddrinfo(argv[1], DEFAULT_PORT, hints, &result);
     if (iResult != 0) {
         printf("getaddrinfo failed with error: %d\n", iResult);
         WSACleanup();
@@ -63,19 +53,19 @@ int __cdecl main(int argc, char** argv)
     for (ptr = result; ptr != NULL; ptr = ptr->ai_next) {
 
         // Create a SOCKET for connecting to server
-        ConnectSocket = socket(ptr->ai_family, ptr->ai_socktype,
+        *ConnectSocket = socket(ptr->ai_family, ptr->ai_socktype,
             ptr->ai_protocol);
-        if (ConnectSocket == INVALID_SOCKET) {
+        if (*ConnectSocket == INVALID_SOCKET) {
             printf("socket failed with error: %ld\n", WSAGetLastError());
             WSACleanup();
             return 1;
         }
 
         // Connect to server.
-        iResult = connect(ConnectSocket, ptr->ai_addr, (int)ptr->ai_addrlen);
+        iResult = connect(*ConnectSocket, ptr->ai_addr, (int)ptr->ai_addrlen);
         if (iResult == SOCKET_ERROR) {
-            closesocket(ConnectSocket);
-            ConnectSocket = INVALID_SOCKET;
+            closesocket(*ConnectSocket);
+            *ConnectSocket = INVALID_SOCKET;
             continue;
         }
         break;
@@ -83,17 +73,99 @@ int __cdecl main(int argc, char** argv)
 
     freeaddrinfo(result);
 
-    if (ConnectSocket == INVALID_SOCKET) {
+    if (*ConnectSocket == INVALID_SOCKET) {
         printf("Unable to connect to server!\n");
         WSACleanup();
         return 1;
     }
+    else{
+        printf("Connection is created!\n");
+        //WSACleanup();
+        return 0;
+    }
 
+
+
+
+
+    return 0;
+}
+
+int __cdecl main(int argc, char** argv)
+{
+
+    WSADATA wsaData;
+    SOCKET ConnectSocket = INVALID_SOCKET;
+    struct addrinfo* result = NULL,
+        * ptr = NULL,
+        hints;
+    
+    int sendbuf_len = 3;
+    char* sendbuf = new char[sendbuf_len];
+
+    int recvbuf_len = 3;
+    char* recvbuf = new char[recvbuf_len];
+
+    int iResult;
+
+    StartUpClient(argc, argv, result, ptr, &hints, &wsaData,&ConnectSocket);
+
+    
+    // Ждем сообщения о начале игры
+    int num_of_players = -1;
+    bool is_game_begin = false;
+    do {
+
+        iResult = recv(ConnectSocket, recvbuf, recvbuf_len, 0);
+        if (iResult > 0) {
+            printf("Bytes received: %d\n", iResult);
+            if (recvbuf[0] == 's')
+            {
+                is_game_begin = true;
+                num_of_players = recvbuf[2] - 48;
+                for (int i = 0; i < recvbuf_len; i++)
+                {
+                    std::cout << recvbuf[i];
+                }
+            }
+        }
+        else if (iResult == 0)
+            printf("Connection closed\n");
+        else
+            printf("recv failed with error: %d\n", WSAGetLastError());
+
+    } while (is_game_begin != true);
+    
+    
+    
+    if (is_game_begin)
+    {
+        sendbuf[0] = 's';
+        sendbuf[1] = 'a';
+        sendbuf[2] = num_of_players + 48;
+
+        for (int i = 0; i < sendbuf_len; i++)
+        {
+            std::cout << sendbuf[i];
+        }
+        iResult = send(ConnectSocket, sendbuf, sendbuf_len, 0);
+
+        if (iResult > 0) {
+            printf("Bytes send: %d\n", iResult);
+        }
+        else if (iResult == 0)
+            printf("Connection closed\n");
+        else
+            printf("send failed with error: %d\n", WSAGetLastError());
+
+    }
+
+
+
+    /*
     // Send an initial buffer
     for (int i = 0; i < 10; i++)
     {
-
-
         iResult = send(ConnectSocket, sendbuf, (int)strlen(sendbuf), 0);
         if (iResult == SOCKET_ERROR) {
             printf("send failed with error: %d\n", WSAGetLastError());
@@ -124,17 +196,6 @@ int __cdecl main(int argc, char** argv)
                 printf("recv failed with error: %d\n", WSAGetLastError());
             std::cout << iResult;
         }
-        /*do {
-
-            iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
-            if (iResult > 0)
-                printf("Bytes received: %d\n", iResult);
-            else if (iResult == 0)
-                printf("Connection closed\n");
-            else
-                printf("recv failed with error: %d\n", WSAGetLastError());
-            std::cout << iResult;
-        } while (iResult > 0);*/
     }
     // shutdown the connection since no more data will be sent
     
@@ -159,11 +220,17 @@ int __cdecl main(int argc, char** argv)
             printf("recv failed with error: %d\n", WSAGetLastError());
 
     } while (iResult > 0);
+    */
+
+
 
     // cleanup
     closesocket(ConnectSocket);
     WSACleanup();
 
+
+    delete[] recvbuf;
+    delete[] sendbuf;
     return 0;
 }
 
