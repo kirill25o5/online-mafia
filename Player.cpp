@@ -19,3 +19,8 @@ const SOCKET& Player::getSocket()
 {
 	return ClientSocket;
 }
+
+int Player::getPlayerRole()
+{
+	return playerRole;
+}

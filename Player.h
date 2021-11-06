@@ -15,6 +15,7 @@ public:
 	Player(const std::string& userName, int id, SOCKET ClientSocket, int role);
 	const std::string& getPlayerName();
 	const SOCKET& getSocket();
+	int getPlayerRole();
 	int getPlayerID();
 	void sleep();
 	void awake();
