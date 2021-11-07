@@ -5,6 +5,7 @@
 class Player
 {
 private:
+	bool isAdmin;
 	SOCKET ClientSocket;
 	int playerRole; //0-мирный житель, 1-коммисар, 2-врач,3-мафия
 	std::string playerName; //Имя пользователя в мафии
@@ -14,9 +15,10 @@ private:
 
 
 public:
-	Player(const std::string& userName, int id, SOCKET ClientSocket, int role);
+	Player(const std::string& userName, int id, SOCKET ClientSocket, int role, bool isAdmin);
 	const std::string& getPlayerName();
 	const SOCKET& getSocket();
+	bool getIsAdmin();
 	int getPlayerRole();
 	int getPlayerID();
 	int setSleepStatus();//i5
