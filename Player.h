@@ -18,10 +18,10 @@ public:
 	const SOCKET& getSocket();
 	int getPlayerRole();
 	int getPlayerID();
-	void sleep();
-	void awake();
-	std::string vote();
-	std::string action();
+	int sleep();
+	int awake();
+	int vote(std::string& suspect);
+	int action(std::string& actoinTarget);
 };
 
 

@@ -15,31 +15,37 @@ int Player::getPlayerID()
 	return playerID;
 }
 
-void Player::sleep()
+int Player::sleep()
 {
+	int iSendResult;
+	iSendResult = send(ClientSocket, sendBuf.c_str(), sendBuf.size() + 1, 0);
+	if (iSendResult == SOCKET_ERROR) {
+		printf("send failed with error: %d\n", WSAGetLastError());
+		closesocket(ClientSocket);
+		WSACleanup();
+		return 1;
+	}
 	statusID = 5;
 }
 
-void Player::awake()
+int Player::awake()
 {
 	statusID = 0;
 }
 
-std::string Player::vote()
+int Player::vote(std::string& suspect)
 {
 	std::cout << "enter suspect's name\n";
-	std::string suspect;
 	std::cin >> suspect;
-	return suspect;
+	return 0;
 
 }
 
-std::string Player::action()
+int Player::action(std::string& actionTarget)
 {
-	std::string actionTarget;
 	std::cout << "enter player's name";
 	std::cin >> actionTarget;
-	return actionTarget;
+	return 0;
 
 }
 
