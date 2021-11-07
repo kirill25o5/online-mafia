@@ -11,8 +11,10 @@ class Game
 private:
 	std::vector<Player> players;
 
-public:
-	Game();
-	void startGame();
 
+public:
+	Game(std::vector<Player>& players);
+	void startGame();
+	void night();
+	void allSleep();
 };
