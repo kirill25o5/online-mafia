@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <winsock2.h>
+#include <iostream>
 class Player
 {
 private:
@@ -8,7 +9,7 @@ private:
 	int playerRole; //0-мирный житель, 1-коммисар, 2-врач,3-мафия
 	std::string playerName; //Имя пользователя в мафии
 	int playerID;
-	int statusID; // 0 - нормальное состояние, 1 - убит мафией, 2 - подозреваемый, 3 - убит мафией и вылечен, 4 - убит на голосовании
+	int statusID; // 0 - нормальное состояние(бодрствует), 1 - убит мафией, 2 - подозреваемый, 3 - убит мафией и вылечен, 4 - убит на голосовании, 5-спит
 
 
 public:
@@ -19,8 +20,8 @@ public:
 	int getPlayerID();
 	void sleep();
 	void awake();
-	void vote();
-	friend void setIDasFirst();
+	std::string vote();
+	std::string action();
 };
 
 

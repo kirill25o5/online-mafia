@@ -15,6 +15,34 @@ int Player::getPlayerID()
 	return playerID;
 }
 
+void Player::sleep()
+{
+	statusID = 5;
+}
+
+void Player::awake()
+{
+	statusID = 0;
+}
+
+std::string Player::vote()
+{
+	std::cout << "enter suspect's name\n";
+	std::string suspect;
+	std::cin >> suspect;
+	return suspect;
+
+}
+
+std::string Player::action()
+{
+	std::string actionTarget;
+	std::cout << "enter player's name";
+	std::cin >> actionTarget;
+	return actionTarget;
+
+}
+
 const SOCKET& Player::getSocket()
 {
 	return ClientSocket;
