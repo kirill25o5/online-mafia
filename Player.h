@@ -19,7 +19,6 @@ public:
 	const SOCKET& getSocket();
 	bool getIsAdmin();
 	int getPlayerRole();
-	int getPlayerID();
 	int setSleepStatus();//i5
 	int setAwakeStatus();//i0
 	int vote(std::string& suspect);

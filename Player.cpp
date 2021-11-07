@@ -10,11 +10,6 @@ const std::string& Player::getPlayerName()
 	return playerName;
 }
 
-int Player::getPlayerID()
-{
-	return playerID;
-}
-
 int Player::setSleepStatus()
 {
 	statusID = 5;
