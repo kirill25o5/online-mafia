@@ -1,8 +1,8 @@
 #include "Player.h"
 
 
-Player::Player(const std::string &userNmae, int id, SOCKET ClientSocket, int role, bool isAdmin):
-	playerName(userNmae), playerID(id), ClientSocket(ClientSocket), statusID(0), playerRole(role), isAdmin(isAdmin)
+Player::Player(const std::string &userNmae, SOCKET ClientSocket, int role, bool isAdmin):
+	playerName(userNmae), ClientSocket(ClientSocket), statusID(0), playerRole(role), isAdmin(isAdmin)
 {}
 
 const std::string& Player::getPlayerName()

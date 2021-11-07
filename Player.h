@@ -9,13 +9,12 @@ private:
 	SOCKET ClientSocket;
 	int playerRole; //0-мирный житель, 1-коммисар, 2-врач,3-мафия
 	std::string playerName; //Имя пользователя в мафии
-	int playerID;
 	int statusID; // 0 - нормальное состояние(бодрствует), 1 - убит мафией, 2 - подозреваемый, 3 - убит мафией и вылечен, 
 	              //4 - убит на голосовании, 5-спит, 6-вылечен в холостую
 
 
 public:
-	Player(const std::string& userName, int id, SOCKET ClientSocket, int role, bool isAdmin);
+	Player(const std::string& userName, SOCKET ClientSocket, int role, bool isAdmin);
 	const std::string& getPlayerName();
 	const SOCKET& getSocket();
 	bool getIsAdmin();
