@@ -1,6 +1,3 @@
-п»ї// client_and_server.cpp : Р­С‚РѕС‚ С„Р°Р№Р» СЃРѕРґРµСЂР¶РёС‚ С„СѓРЅРєС†РёСЋ "main". Р—РґРµСЃСЊ РЅР°С‡РёРЅР°РµС‚СЃСЏ Рё Р·Р°РєР°РЅС‡РёРІР°РµС‚СЃСЏ РІС‹РїРѕР»РЅРµРЅРёРµ РїСЂРѕРіСЂР°РјРјС‹.
-//
-
 #undef UNICODE
 
 #define WIN32_LEAN_AND_MEAN
@@ -111,7 +108,7 @@ void check_send_warning(int result) {
 
 void rand_mix(std::vector<int>& arr) {
 
-    //РїРѕРґРєР»СЋС‡Р°РµРј windows.h
+    //подключаем windows.h
     SYSTEMTIME tm;
     GetLocalTime(&tm);
     srand(tm.wMilliseconds);
@@ -149,14 +146,15 @@ std::vector<int> setRoles(int numberOfPlayers) {
 }
 
 int inputAmountOfPlayers() {
+    std::cout << "Enter amount of players\n";
     int numberOfPlayers;
     std::cin >> numberOfPlayers;
-    while (numberOfPlayers > 7 || numberOfPlayers < 4 || typeid(numberOfPlayers) != typeid(int)) {
+    while (numberOfPlayers > 7 || numberOfPlayers < 2 || typeid(numberOfPlayers) != typeid(int)) {
         std::cout << "Wrong input\n";
         std::cin >> numberOfPlayers;
     }
     return numberOfPlayers;
-}
+}// change 2
 
 
 int connectionToClients(std::vector<Player>& players, int numberOfPlayers) {
@@ -346,7 +344,7 @@ int __cdecl main()
         std::cin >> serv_ip;
         StartUpClient(argc, serv_ip, result, ptr, &hints, &wsaData, &ConnectSocket);
 
-        // РЎРѕРµРґРёРЅРёРІС€РёСЃСЊ СЃ СЃРµСЂРІРµСЂРѕРј, РїРµСЂРµРґР°РµРј РµРјСѓ РёРјСЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ РёРіСЂРѕРєР°
+        // Соединившись с сервером, передаем ему имя пользователя игрока
         std::cout << "enter your name:\n";
         std::string name;
         std::cin >> name;
@@ -355,7 +353,7 @@ int __cdecl main()
         check_send_warning(iResult);
 
 
-        // Р–РґРµРј СЃРѕРѕР±С‰РµРЅРёСЏ Рѕ РЅР°С‡Р°Р»Рµ РёРіСЂС‹
+        // Ждем сообщения о начале игры
         int num_of_players = -1, my_role = -1, my_status = -1;
         bool is_game_begin = false;
         do {
@@ -408,6 +406,6 @@ int __cdecl main()
         delete[] recvbuf;
         delete[] sendbuf;
     }
-    
+
     return 0;
 }
