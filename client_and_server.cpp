@@ -231,7 +231,7 @@ int connectionToClientsAndStartGame(std::vector<Player>& players, int numberOfPl
 
     int id = 0;
     std::vector<int> roles = setRoles(numberOfPlayers);
-    players.push_back(Player(adminName, id, NULL, roles[id++], true));
+    players.push_back(Player(adminName, NULL, roles[id++], true));
 
     
     int recvBuf_len = 30;
@@ -245,7 +245,7 @@ int connectionToClientsAndStartGame(std::vector<Player>& players, int numberOfPl
             int iResult;
             iResult = recv(ClientSocket, recvBuf, recvBuf_len, 0);
             if (iResult > 0) {
-                players.push_back(Player(recvBuf, id, ClientSocket, roles[id++], false));
+                players.push_back(Player(recvBuf, ClientSocket, roles[id++], false));
             }
             else {
                 printf("recv failed with error: %d\n", WSAGetLastError());
