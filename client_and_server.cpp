@@ -128,6 +128,9 @@ std::vector<int> setRoles(int numberOfPlayers) {
     case 2:
         roles = { 3,1 };
         break;
+    case3:
+        roles = { 3,1,0 };
+        break;
     case 4:
         roles = { 3,1,0,0 };
         break;
@@ -156,8 +159,7 @@ int inputAmountOfPlayers() {
     return numberOfPlayers;
 }// change 2
 
-
-int connectionToClients(std::vector<Player>& players, int numberOfPlayers) {
+int connectionToClientsAndStartGame(std::vector<Player>& players, int numberOfPlayers) {
 
 
     int iResult;
@@ -220,16 +222,20 @@ int connectionToClients(std::vector<Player>& players, int numberOfPlayers) {
         return 1;
     }
 
+    //enter admin's name
+    players.clear();
+    std::string adminName;
+    std::cout << "Enter your name\n";
+    std::cin >> adminName;
 
 
-
-
-
+    int id = 0;
     std::vector<int> roles = setRoles(numberOfPlayers);
+    players.push_back(Player(adminName, id, NULL, roles[id++], true));
+
+    
     int recvBuf_len = 30;
     char* recvBuf = new char[recvBuf_len];
-    int id = 0;
-    players.clear();
     while (players.size() != numberOfPlayers) {
         // Accept a client socket
         ClientSocket = accept(ListenSocket, NULL, NULL);
@@ -239,7 +245,7 @@ int connectionToClients(std::vector<Player>& players, int numberOfPlayers) {
             int iResult;
             iResult = recv(ClientSocket, recvBuf, recvBuf_len, 0);
             if (iResult > 0) {
-                players.push_back(Player(recvBuf, id, ClientSocket, roles[id++]));
+                players.push_back(Player(recvBuf, id, ClientSocket, roles[id++], false));
             }
             else {
                 printf("recv failed with error: %d\n", WSAGetLastError());
@@ -274,16 +280,24 @@ int connectionToClients(std::vector<Player>& players, int numberOfPlayers) {
     int iSendResult;
     for (auto player : players) {
         sendBuf = "sa" + std::to_string(numberOfPlayers) + "r" + std::to_string(player.getPlayerRole()) + "i0" + playersNames;
-        iSendResult = send(ClientSocket, sendBuf.c_str(), sendBuf.size() + 1, 0);
-        if (iSendResult == SOCKET_ERROR) {
-            printf("send failed with error: %d\n", WSAGetLastError());
-            closesocket(ClientSocket);
-            WSACleanup();
-            return 1;
+        if (!player.getIsAdmin()) {
+            iSendResult = send(ClientSocket, sendBuf.c_str(), sendBuf.size() + 1, 0);
+            if (iSendResult == SOCKET_ERROR) {
+                printf("send failed with error: %d\n", WSAGetLastError());
+                closesocket(ClientSocket);
+                WSACleanup();
+                return 1;
+            }
         }
     }
 
     return 0;
+}
+
+void showPlayers(std::vector<Player>& players) {
+    for (auto player : players) {
+        std::cout << player.getPlayerName() << "\n";
+    }
 }
 
 
@@ -312,13 +326,11 @@ int __cdecl main()
 
         int numberOfPlayers = inputAmountOfPlayers();
 
-        if (connectionToClients(players, numberOfPlayers) != 0) return 1;
+        if (connectionToClientsAndStartGame(players, numberOfPlayers) != 0) return 1;
 
         std::cout << "start game\n";
 
-        for (auto player : players) {
-            std::cout << player.getPlayerName() << "\n";
-        }
+        showPlayers(players);
 
         closeAllConections(players);
     }
