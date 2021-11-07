@@ -1,3 +1,6 @@
+п»ї// client_and_server.cpp : Р­С‚РѕС‚ С„Р°Р№Р» СЃРѕРґРµСЂР¶РёС‚ С„СѓРЅРєС†РёСЋ "main". Р—РґРµСЃСЊ РЅР°С‡РёРЅР°РµС‚СЃСЏ Рё Р·Р°РєР°РЅС‡РёРІР°РµС‚СЃСЏ РІС‹РїРѕР»РЅРµРЅРёРµ РїСЂРѕРіСЂР°РјРјС‹.
+//
+
 #undef UNICODE
 
 #define WIN32_LEAN_AND_MEAN
@@ -23,27 +26,24 @@
 #pragma comment (lib, "Mswsock.lib")
 #pragma comment (lib, "AdvApi32.lib")
 
-
 #define DEFAULT_BUFLEN 512
 #define DEFAULT_PORT "27015"
 
 
+SOCKET StartUpClient(std::string serv_ip) {
 
-int StartUpClient(int argc, std::string serv_ip, struct addrinfo* result, struct addrinfo* ptr, struct addrinfo* hints, WSADATA* wsaData, SOCKET* ConnectSocket) {
-
+    WSADATA wsaData;
+    SOCKET ConnectSocket = INVALID_SOCKET;
+    struct addrinfo* result = NULL,
+        * ptr = NULL,
+        hints;
     int iResult;
 
-    // Validate the parameters
-    if (argc != 2) {
-        printf("usage: server-name your name\n");
-        return 1;
-    }
-
     // Initialize Winsock
-    iResult = WSAStartup(MAKEWORD(2, 2), wsaData);
+    iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
     if (iResult != 0) {
         printf("WSAStartup failed with error: %d\n", iResult);
-        return 1;
+        return INVALID_SOCKET;
     }
 
     ZeroMemory(&hints, sizeof(hints));
@@ -51,32 +51,31 @@ int StartUpClient(int argc, std::string serv_ip, struct addrinfo* result, struct
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = IPPROTO_TCP;*/
 
-
     // Resolve the server address and port
-    iResult = getaddrinfo(serv_ip.c_str(), DEFAULT_PORT, hints, &result);
+    iResult = getaddrinfo(serv_ip.c_str(), DEFAULT_PORT, &hints, &result);
     if (iResult != 0) {
         printf("getaddrinfo failed with error: %d\n", iResult);
         WSACleanup();
-        return 1;
+        return INVALID_SOCKET;
     }
 
     // Attempt to connect to an address until one succeeds
     for (ptr = result; ptr != NULL; ptr = ptr->ai_next) {
 
         // Create a SOCKET for connecting to server
-        *ConnectSocket = socket(ptr->ai_family, ptr->ai_socktype,
+        ConnectSocket = socket(ptr->ai_family, ptr->ai_socktype,
             ptr->ai_protocol);
-        if (*ConnectSocket == INVALID_SOCKET) {
+        if (ConnectSocket == INVALID_SOCKET) {
             printf("socket failed with error: %ld\n", WSAGetLastError());
             WSACleanup();
-            return 1;
+            return INVALID_SOCKET;
         }
 
         // Connect to server.
-        iResult = connect(*ConnectSocket, ptr->ai_addr, (int)ptr->ai_addrlen);
+        iResult = connect(ConnectSocket, ptr->ai_addr, (int)ptr->ai_addrlen);
         if (iResult == SOCKET_ERROR) {
-            closesocket(*ConnectSocket);
-            *ConnectSocket = INVALID_SOCKET;
+            closesocket(ConnectSocket);
+            ConnectSocket = INVALID_SOCKET;
             continue;
         }
         break;
@@ -84,16 +83,16 @@ int StartUpClient(int argc, std::string serv_ip, struct addrinfo* result, struct
 
     freeaddrinfo(result);
 
-    if (*ConnectSocket == INVALID_SOCKET) {
+    if (ConnectSocket == INVALID_SOCKET) {
         printf("Unable to connect to server!\n");
         WSACleanup();
-        return 1;
+        return INVALID_SOCKET;
     }
     else {
         printf("Connection is created!\n");
     }
 
-    return 0;
+    return ConnectSocket;
 }
 
 void check_send_warning(int result) {
@@ -106,9 +105,78 @@ void check_send_warning(int result) {
         printf("send failed with error: %d\n", WSAGetLastError());
 }
 
+void send_name(SOCKET ConnectSocket,std::string name) {
+    int iResult = send(ConnectSocket, name.c_str(), name.size() + 1, 0);
+    check_send_warning(iResult);
+}
+
+void waiting_for_start(SOCKET ConnectSocket, char* recvbuf, int recvbuf_len) {
+    bool is_game_begin = false;
+    int iResult;
+    do {
+        iResult = recv(ConnectSocket, recvbuf, recvbuf_len, 0);
+        if (iResult > 0) {
+            printf("Bytes received: %d\n", iResult);
+            if (recvbuf[0] == 's')
+            {
+                is_game_begin = true;
+                std::cout << recvbuf;
+            }
+        }
+        else if (iResult == 0)
+            printf("Connection closed\n");
+        else
+            printf("recv failed with error: %d\n", WSAGetLastError());
+
+    } while (is_game_begin != true);
+}
+
+void print_start_info(char* recvbuf, int &my_role) {
+    int len = 0;
+    while (recvbuf[len]) len++;
+    if (len < 9)
+    {
+        std::cout << "Incorrect start message!\n";
+        return;
+    }
+    if (recvbuf[0] != 's')
+    {
+        std::cout << "Incorrect start message!\n";
+        return;
+    }
+    if (recvbuf[1] != 'a')
+    {
+        std::cout << "Incorrect start message!\n";
+        return;
+    }
+    if (recvbuf[3] != 'r')
+    {
+        std::cout << "Incorrect start message!\n";
+        return;
+    }
+    if (recvbuf[5] != 'i')
+    {
+        std::cout << "Incorrect start message!\n";
+        return;
+    }
+    if (recvbuf[7] != 'n')
+    {
+        std::cout << "Incorrect start message!\n";
+        return;
+    }
+    for (int i = 8; i < len; i++)
+    {
+        if (recvbuf[i] == ',')
+            std::cout << '\n';
+        else
+            std::cout << recvbuf[i];
+    }
+}
+
+
 void rand_mix(std::vector<int>& arr) {
 
-    //подключаем windows.h
+    //ГЇГ®Г¤ГЄГ«ГѕГ·Г ГҐГ¬ windows.h
     SYSTEMTIME tm;
     GetLocalTime(&tm);
     srand(tm.wMilliseconds);
@@ -128,7 +196,7 @@ std::vector<int> setRoles(int numberOfPlayers) {
     case 2:
         roles = { 3,1 };
         break;
-    case3:
+    case 3:
         roles = { 3,1,0 };
         break;
     case 4:
@@ -158,6 +226,7 @@ int inputAmountOfPlayers() {
     }
     return numberOfPlayers;
 }// change 2
+
 
 int connectionToClientsAndStartGame(std::vector<Player>& players, int numberOfPlayers) {
 
@@ -233,7 +302,7 @@ int connectionToClientsAndStartGame(std::vector<Player>& players, int numberOfPl
     std::vector<int> roles = setRoles(numberOfPlayers);
     players.push_back(Player(adminName, NULL, roles[id++], true));
 
-    
+
     int recvBuf_len = 30;
     char* recvBuf = new char[recvBuf_len];
     while (players.size() != numberOfPlayers) {
@@ -300,7 +369,6 @@ void showPlayers(std::vector<Player>& players) {
     }
 }
 
-
 int closeAllConections(const std::vector<Player>& players) {
     for (auto ClientSocket : players) {
         closesocket(ClientSocket.getSocket());
@@ -336,79 +404,28 @@ int __cdecl main()
     }
     else
     {
-        WSADATA wsaData;
-        SOCKET ConnectSocket = INVALID_SOCKET;
-        struct addrinfo* result = NULL,
-            * ptr = NULL,
-            hints;
-
-        int sendbuf_len = 256;
-        char* sendbuf = new char[sendbuf_len];
-
+        int iResult;
+        
         int recvbuf_len = 256;
         char* recvbuf = new char[recvbuf_len];
 
-        int iResult;
-
-        int argc = 2;
         std::cout << "enter serv ip:\n";
         std::string serv_ip;
         std::cin >> serv_ip;
-        StartUpClient(argc, serv_ip, result, ptr, &hints, &wsaData, &ConnectSocket);
+        SOCKET ConnectSocket = StartUpClient(serv_ip);
 
-        // Соединившись с сервером, передаем ему имя пользователя игрока
+        // Г‘Г®ГҐГ¤ГЁГ­ГЁГўГёГЁГ±Гј Г± Г±ГҐГ°ГўГҐГ°Г®Г¬, ГЇГҐГ°ГҐГ¤Г ГҐГ¬ ГҐГ¬Гі ГЁГ¬Гї ГЇГ®Г«ГјГ§Г®ГўГ ГІГҐГ«Гї ГЁГЈГ°Г®ГЄГ 
         std::cout << "enter your name:\n";
         std::string name;
         std::cin >> name;
 
-        iResult = send(ConnectSocket, name.c_str(), name.size() + 1, 0);
-        check_send_warning(iResult);
+        send_name(ConnectSocket, name);
 
-
-        // Ждем сообщения о начале игры
-        int num_of_players = -1, my_role = -1, my_status = -1;
-        bool is_game_begin = false;
-        do {
-
-            iResult = recv(ConnectSocket, recvbuf, recvbuf_len, 0);
-            if (iResult > 0) {
-                printf("Bytes received: %d\n", iResult);
-                if (recvbuf[0] == 's')
-                {
-                    is_game_begin = true;
-                    num_of_players = recvbuf[2] - 48;
-                    my_role = recvbuf[4] - 48;
-                    my_status = recvbuf[6] - 48;
-                    std::cout << recvbuf;
-                }
-            }
-            else if (iResult == 0)
-                printf("Connection closed\n");
-            else
-                printf("recv failed with error: %d\n", WSAGetLastError());
-
-        } while (is_game_begin != true);
-
-
-
-        if (is_game_begin)
-        {
-            sendbuf[0] = 's';
-            sendbuf[1] = 'a';
-            sendbuf[2] = num_of_players + 48;
-            sendbuf[3] = 'r';
-            sendbuf[4] = my_role + 48;
-            sendbuf[5] = 'i';
-            sendbuf[6] = my_status + 48;
-
-            //for (int i = 0; i < sendbuf_len; i++)
-            //{
-            //    std::cout << sendbuf[i];
-            //}
-            //iResult = send(ConnectSocket, sendbuf, sendbuf_len, 0);
-            //check_send_warning(iResult);
-
-        }
+        waiting_for_start(ConnectSocket, recvbuf, recvbuf_len);
+        
+        int my_role = -1;
+        
+        print_start_info(recvbuf, my_role);
 
         // cleanup
         closesocket(ConnectSocket);
@@ -416,7 +433,6 @@ int __cdecl main()
 
 
         delete[] recvbuf;
-        delete[] sendbuf;
     }
 
     return 0;
