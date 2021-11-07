@@ -44,13 +44,13 @@ std::vector<int> setRoles(int numberOfPlayers) {
 
 int inputAmountOfPlayers() {
     std::cout << "Enter amount of players\n";
-    int numberOfPlayers;
+    std::string numberOfPlayers;
     std::cin >> numberOfPlayers;
-    while (numberOfPlayers > 7 || numberOfPlayers < 2 || typeid(numberOfPlayers) != typeid(int)) {
+    while (!(numberOfPlayers.size()==1 && numberOfPlayers.front()>'1' && numberOfPlayers.front()<'8')) {
         std::cout << "Wrong input\n";
         std::cin >> numberOfPlayers;
     }
-    return numberOfPlayers;
+    return atoi(numberOfPlayers.c_str());
 }// change 2
 
 
@@ -122,7 +122,10 @@ int connectionToClientsAndStartGame(std::vector<Player>& players, int numberOfPl
     std::string adminName;
     std::cout << "Enter your name\n";
     std::cin >> adminName;
-
+    while (adminName.size() > 29) {
+        std::cout << "wrong name\n";
+        std::cin >> adminName;
+    }
 
     int id = 0;
     std::vector<int> roles = setRoles(numberOfPlayers);
