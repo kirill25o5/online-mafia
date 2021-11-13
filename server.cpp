@@ -125,7 +125,7 @@ int connectionToClientsAndStartGame(std::vector<Player>& players, int numberOfPl
 
     int recvBuf_len = 30;
     char* recvBuf = new char[recvBuf_len];
-    while (players.size() != numberOfPlayers) {
+    while (players.size() != numberOfPlayers-1) {
         // Accept a client socket
         ClientSocket = accept(ListenSocket, NULL, NULL);
 
