@@ -117,19 +117,10 @@ int connectionToClientsAndStartGame(std::vector<Player>& players, int numberOfPl
         return 1;
     }
 
-    //enter admin's name
-    players.clear();
-    std::string adminName;
-    std::cout << "Enter your name\n";
-    std::cin >> adminName;
-    while (adminName.size() > 29) {
-        std::cout << "wrong name\n";
-        std::cin >> adminName;
-    }
-
-    int id = 0;
+    
     std::vector<int> roles = setRoles(numberOfPlayers);
-    players.push_back(Player(adminName, NULL, roles[id++], true));
+    int id = 0;
+   
 
 
     int recvBuf_len = 30;
@@ -190,6 +181,17 @@ int connectionToClientsAndStartGame(std::vector<Player>& players, int numberOfPl
     }
 
     return 0;
+
+    //enter admin's name
+    players.clear();
+    std::string adminName;
+    std::cout << "Enter your name\n";
+    std::cin >> adminName;
+    while (adminName.size() > 29) {
+        std::cout << "wrong name\n";
+        std::cin >> adminName;
+    }
+    players.push_back(Player(adminName, NULL, roles[id++], true));
 }
 
 void showPlayers(std::vector<Player>& players) {
