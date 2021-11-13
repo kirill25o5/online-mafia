@@ -180,10 +180,10 @@ int connectionToClientsAndStartGame(std::vector<Player>& players, int numberOfPl
         }
     }
 
-    return 0;
+   
 
     //enter admin's name
-    players.clear();
+    
     std::string adminName;
     std::cout << "Enter your name\n";
     std::cin >> adminName;
@@ -192,6 +192,8 @@ int connectionToClientsAndStartGame(std::vector<Player>& players, int numberOfPl
         std::cin >> adminName;
     }
     players.push_back(Player(adminName, NULL, roles[id++], true));
+
+    return 0;
 }
 
 void showPlayers(std::vector<Player>& players) {
