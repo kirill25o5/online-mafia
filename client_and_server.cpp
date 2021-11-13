@@ -29,6 +29,9 @@
 int __cdecl main()
 {
     bool is_game_server;
+
+    std::vector<std::pair<std::string, int>> morning_status;
+
     std::cout << "serv or not serv (1 or 0)";
     char c;
     std::cin >> c;
@@ -70,11 +73,16 @@ int __cdecl main()
 
         send_name(ConnectSocket, name);
 
-        waiting_for_start(ConnectSocket, recvbuf, recvbuf_len);
-
         int my_role = -1;
+        while (true)
+        {
+            waiting_for_message(ConnectSocket, morning_status, recvbuf, recvbuf_len, my_role);
+        }
+        
+        //get_morning_info(morning_status, recvbuf, my_role);
 
-        print_start_info(recvbuf, my_role);
+
+
 
         // cleanup
         closesocket(ConnectSocket);
