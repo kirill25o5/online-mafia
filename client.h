@@ -36,6 +36,12 @@ void check_send_warning(int);
 
 void send_name(SOCKET, std::string);
 
-void waiting_for_start(SOCKET, char*, int);
+//void waiting_for_start(SOCKET, char*, int);
 
-void print_start_info(char*, int&);
+void process_morning_info(std::vector< std::pair<std::string, int>>&, char*, int&);
+
+void make_choise(SOCKET, std::vector<std::pair<std::string, int>>&, char*, int, int&);
+
+void vote(SOCKET, std::vector<std::pair<std::string, int>>&, char*, int, int&);
+
+void waiting_for_message(SOCKET, std::vector<std::pair<std::string, int>>&, char*, int, int&);
