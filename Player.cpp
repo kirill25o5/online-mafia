@@ -12,9 +12,9 @@ const std::string& Player::getPlayerName()
 
 int Player::setSleepStatus()
 {
-	statusID = 5;
+	statusID = 3;
 	if (!isAdmin) {
-		std::string sendBuf = "i5";
+		std::string sendBuf = "i3";
 		int iSendResult;
 		iSendResult = send(ClientSocket, sendBuf.c_str(), sendBuf.size() + 1, 0);
 		if (iSendResult == SOCKET_ERROR) {
@@ -33,24 +33,12 @@ int Player::setSleepStatus()
 int Player::setAwakeStatus()
 {
 	statusID = 0;
-	if (!isAdmin) {
-		std::string sendBuf = "i0";
-		int iSendResult;
-		iSendResult = send(ClientSocket, sendBuf.c_str(), sendBuf.size() + 1, 0);
-		if (iSendResult == SOCKET_ERROR) {
-			printf("send failed with error: %d\n", WSAGetLastError());
-			closesocket(ClientSocket);
-			WSACleanup();
-			return 1;
-		}
-	}
-	else
-		std::cout << "You've awaken\n";
 	return 0;
 }
 
 int Player::vote(std::string& suspect)
 {
+	if (playerRole == 2) return 100;
 	if (!isAdmin) {
 		std::string sendBuf = "V";
 		int iSendResult;
@@ -90,6 +78,7 @@ int Player::vote(std::string& suspect)
 
 int Player::action(std::string& actionTarget)
 {
+	if (playerRole == 2) return 100;
 	if (!isAdmin) {
 		std::string sendBuf = "D";
 		int iSendResult;
@@ -107,7 +96,7 @@ int Player::action(std::string& actionTarget)
 		char* recvBuf = new char[recvBuf_len];
 		iResult = recv(ClientSocket, recvBuf, recvBuf_len, 0);
 		if (iResult > 0) {
-			if (recvBuf[0] == 'd') actionTarget = recvBuf;
+			if (recvBuf[0] == 'd' && recvBuf[1]>='0' && recvBuf[1]<='7') actionTarget = recvBuf;
 			actionTarget.erase(actionTarget.begin());
 		}
 		else {
@@ -141,89 +130,26 @@ int Player::getPlayerRole()
 	return playerRole;
 }
 
-int Player::setKilledByMafiaStatus()
+int Player::getStatus()
 {
-	statusID = 1;
-	if (!isAdmin) {
-		std::string sendBuf = "i1";
-		int iSendResult;
-		iSendResult = send(ClientSocket, sendBuf.c_str(), sendBuf.size() + 1, 0);
-		if (iSendResult == SOCKET_ERROR) {
-			printf("send failed with error: %d\n", WSAGetLastError());
-			closesocket(ClientSocket);
-			WSACleanup();
-			return 1;
-		}
-	}
-	return 0;
-}
-
-int Player::setSuspectedStatus()
-{
-	statusID = 2;
-	if (!isAdmin) {
-		std::string sendBuf = "i2";
-		int iSendResult;
-		iSendResult = send(ClientSocket, sendBuf.c_str(), sendBuf.size() + 1, 0);
-		if (iSendResult == SOCKET_ERROR) {
-			printf("send failed with error: %d\n", WSAGetLastError());
-			closesocket(ClientSocket);
-			WSACleanup();
-			return 1;
-		}
-	}
-	return 0;
+	return statusID;
 }
 
 int Player::setKilledAndHealthedStatus()
 {
-	statusID = 3;
-	if (!isAdmin) {
-		std::string sendBuf = "i3";
-		int iSendResult;
-		iSendResult = send(ClientSocket, sendBuf.c_str(), sendBuf.size() + 1, 0);
-		if (iSendResult == SOCKET_ERROR) {
-			printf("send failed with error: %d\n", WSAGetLastError());
-			closesocket(ClientSocket);
-			WSACleanup();
-			return 1;
-		}
-	}
+	statusID = 1;
 	return 0;
 }
 
 int Player::setHealthed()
 {
-	statusID = 6;
-	if (!isAdmin) {
-		std::string sendBuf = "i6";
-		int iSendResult;
-		iSendResult = send(ClientSocket, sendBuf.c_str(), sendBuf.size() + 1, 0);
-		if (iSendResult == SOCKET_ERROR) {
-			printf("send failed with error: %d\n", WSAGetLastError());
-			closesocket(ClientSocket);
-			WSACleanup();
-			return 1;
-		}
-	}
-	
-	return 0;
-}
-
-int Player::setKilledByVotingStatus()
-{
 	statusID = 4;
-	if (!isAdmin) {
-		std::string sendBuf = "i4";
-		int iSendResult;
-		iSendResult = send(ClientSocket, sendBuf.c_str(), sendBuf.size() + 1, 0);
-		if (iSendResult == SOCKET_ERROR) {
-			printf("send failed with error: %d\n", WSAGetLastError());
-			closesocket(ClientSocket);
-			WSACleanup();
-			return 1;
-		}
-	}
-
 	return 0;
 }
+
+int Player::setDeadStatus()
+{
+	statusID = 2;
+	return 0;
+}
+
