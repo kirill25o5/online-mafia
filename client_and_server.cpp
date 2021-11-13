@@ -15,6 +15,7 @@
 #include <string_view>
 #include "server.h"
 #include "client.h"
+#include "Game.h"
 
 // Need to link with Ws2_32.lib
 //#pragma comment (lib, "Ws2_32.lib")
@@ -52,7 +53,11 @@ int __cdecl main()
 
         showPlayers(players);
 
+        Game game(players);
+        game.startGame();
+
         closeAllConections(players);
+
     }
     else
     {
@@ -78,7 +83,7 @@ int __cdecl main()
         {
             waiting_for_message(ConnectSocket, morning_status, recvbuf, recvbuf_len, my_role);
         }
-        
+
         //get_morning_info(morning_status, recvbuf, my_role);
 
 
