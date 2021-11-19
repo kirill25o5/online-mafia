@@ -123,11 +123,13 @@ void process_morning_info(std::vector<std::pair<std::string, int>>& morning_stat
             std::cout << "You are mafia\n";
             break;
         }
+        
         int num_of_alife = recvbuf[2] - 48;
         morning_status.resize(num_of_alife);
         int cur_name = 0;
         morning_status[cur_name].first.clear();
         morning_status[cur_name].second = 0;
+        std::cout << '\n';
         for (int i = 8; i < len; i++)
         {
             if (recvbuf[i] == ',') {
@@ -144,7 +146,6 @@ void process_morning_info(std::vector<std::pair<std::string, int>>& morning_stat
         }
 
         std::cout << "Start message received!\n";
-        return;
         
         if ((len < 9) || (recvbuf[1] != 'a') || (recvbuf[3] != 'r') || (recvbuf[5] != 'i') || (recvbuf[7] != 'n'))
         {
@@ -165,11 +166,41 @@ void process_morning_info(std::vector<std::pair<std::string, int>>& morning_stat
         std::vector<std::pair<std::string, int>> prev_status = morning_status;
         for (int i = 3; i < len; i = i + 3)
         {
-            status = recvbuf[i + 2] - 48;
+            status = recvbuf[i] - 48;
 
-            morning_status[i - 48].second = status;
+            morning_status[recvbuf[i-2] - 48].second = status;
         }
+
+        
+        std::cout << '\n';
+        for (int i = 0; i < morning_status.size(); i++)
+        {
+            std::cout << morning_status[i].first;
+        
+            switch (morning_status[i].second)
+            {
+            case 0:
+                std::cout << "is awaked\n";
+                    break;
+            case 1:
+                std::cout << "is killed and cured\n";
+                    break;
+            case 2:
+                std::cout << "is dead\n";
+                    break;
+            case 3:
+                std::cout << "is slipping\n";
+                    break;
+            default:
+                break;
+            }
+        }
+
+        std::cout << "Status u!\n";
+
     }
+
+    std::cout << '\n';
 }
 
 void make_choise(SOCKET ConnectSocket, std::vector<std::pair<std::string, int>>& morning_status, char* recvbuf, int recvbuf_len, int& my_role) {
@@ -201,13 +232,14 @@ void make_choise(SOCKET ConnectSocket, std::vector<std::pair<std::string, int>>&
                 return ((pr.first == name) && ((pr.second == 0) || (pr.second == 1) || (pr.second == 3) || (pr.second == 4)));
             }
         );
-        cor_name = iter != morning_status.end();
+        cor_name = (iter != morning_status.end());
     }
     int index = std::distance(morning_status.begin(), iter);
-    char* buf = new char[2];
+    char* buf = new char[3];
     buf[0] = 'd';
     buf[1] = index + 48;
-    int iResult = send(ConnectSocket, buf, 2, 0);
+    buf[2] = 0;
+    int iResult = send(ConnectSocket, buf, 3, 0);
     check_send_warning(iResult);
     delete[] buf;
 
@@ -215,8 +247,9 @@ void make_choise(SOCKET ConnectSocket, std::vector<std::pair<std::string, int>>&
 
 void vote(SOCKET ConnectSocket, std::vector<std::pair<std::string, int>>& morning_status, char* recvbuf, int recvbuf_len, int& my_role) {
     
+    std::cout << "Please, vote\n";
     std::string name = " ";
-
+    
     bool cor_name = false;
     auto iter = morning_status.begin();
     while (!cor_name)
@@ -231,13 +264,13 @@ void vote(SOCKET ConnectSocket, std::vector<std::pair<std::string, int>>& mornin
         cor_name = (iter != morning_status.end());
     }
     int index = std::distance(morning_status.begin(), iter);
-    char* buf = new char[2];
+    char* buf = new char[3];
     buf[0] = 'v';
     buf[1] = index + 48;
-    int iResult = send(ConnectSocket, buf, 2, 0);
+    buf[2] = 0;
+    int iResult = send(ConnectSocket, buf, 3, 0);
     check_send_warning(iResult);
     delete[] buf;
-
 }
 
 void waiting_for_message(SOCKET ConnectSocket, std::vector<std::pair<std::string, int>>& morning_status, char* recvbuf, int recvbuf_len, int& my_role) {
@@ -262,49 +295,44 @@ void waiting_for_message(SOCKET ConnectSocket, std::vector<std::pair<std::string
     }
     else if (recvbuf[0] == 'D')
     {
+        std::cout << my_role;
         make_choise(ConnectSocket, morning_status, recvbuf, recvbuf_len, my_role);
 
-        do {
-            iResult = recv(ConnectSocket, recvbuf, recvbuf_len, 0);
-            if (iResult > 0) {
-                printf("Bytes received: %d\n", iResult);
-                std::cout << recvbuf;
+        if (my_role == 1)
+        {
+            do {
+                iResult = recv(ConnectSocket, recvbuf, recvbuf_len, 0);
+                if (iResult > 0) {
+                    printf("Bytes received: %d\n", iResult);
+                    std::cout << recvbuf;
+                }
+                else if (iResult == 0)
+                    printf("Connection closed\n");
+                else
+                    printf("recv failed with error: %d\n", WSAGetLastError());
+
+            } while (iResult <= 0);
+
+            if (recvbuf[0] == '1')
+            {
+                std::cout << "You catched mafia!!! Congradulations!!!\n";
             }
-            else if (iResult == 0)
-                printf("Connection closed\n");
             else
-                printf("recv failed with error: %d\n", WSAGetLastError());
-
-        } while (iResult <= 0);
-
-        if (recvbuf[0] == '1')
-        {
-            std::cout << "You catched mafia!!! Congradulations!!!\n";
-        }
-        else
-        {
-            std::cout << "You'll be lucky another time(((\n";
+            {
+                std::cout << "You'll be lucky another time(((\n";
+            }
         }
     }
     else if (recvbuf[0] == 'V')
     {
         vote(ConnectSocket, morning_status, recvbuf, recvbuf_len, my_role);
-
-        do {
-            iResult = recv(ConnectSocket, recvbuf, recvbuf_len, 0);
-            if (iResult > 0) {
-                printf("Bytes received: %d\n", iResult);
-                std::cout << recvbuf;
-            }
-            else if (iResult == 0)
-                printf("Connection closed\n");
-            else
-                printf("recv failed with error: %d\n", WSAGetLastError());
-
-        } while ((iResult <= 0) || (((recvbuf[0]) < '0') && (recvbuf[0]) > '9'));
-
-        
+    }
+    else if ((recvbuf[0] >= '0') && (recvbuf[0] <= '9'))
+    {
         std::cout << "During the voting we desided to kill\n" << morning_status[recvbuf[0] - 48].first;
-        
+    }
+    else if (recvbuf[0] == 'i')
+    {
+        std::cout << "You are sleeping";
     }
 }
