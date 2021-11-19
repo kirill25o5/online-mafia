@@ -250,7 +250,7 @@ int Game::doctorAction()
 void Game::night()
 {
 	allSleep();
-	
+	system("pause 1000");
 
 	int killedByMafiaID = mafiaAction();
 	int suspectID = policeAction();
