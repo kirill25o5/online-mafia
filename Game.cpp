@@ -272,6 +272,7 @@ void Game::day()
 	allWakeUp();
 
 	sendMorningStatus();
+	system("pause 1000");
 
 	showAdminMorningInfo();
 
