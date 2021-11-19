@@ -24,7 +24,7 @@ int Game::checkGameStatus()
 	}
 
 	if (mafiaPlayersDead == mafia.size()) return 1;
-	if (otherPlayersDead == (players.size() - mafia.size()) || (mafiaPlayerAlive==1 && otherPlayersAlive==1)) return 2;
+	if (otherPlayersDead == (players.size() - mafia.size()) || (otherPlayersAlive==1 && mafiaPlayerAlive>=otherPlayersAlive)) return 2;
 	return 0;
 }
 
@@ -53,7 +53,7 @@ void Game::showAdminMorningInfo()
 
 void Game::allWakeUp() {
 	for (auto &player : players) {
-		if (player.getStatus() == 3 && !player.getIsAdmin()) {
+		if (player.getStatus() == 3) {
 			player.setAwakeStatus();
 		}
 	}
@@ -200,7 +200,7 @@ int Game::mafiaAction()
 int Game::policeAction()
 {
 
-	if (players[police].getPlayerRole() == 2 || police == -1) return 100;
+	if (players[police].getStatus() == 2 || police == -1) return 100;
 	std::string suspect_str;
 	int suspect;
 	do {
@@ -234,7 +234,7 @@ int Game::policeAction()
 
 int Game::doctorAction()
 {
-	if (doctor == -1 || players[doctor].getPlayerRole()==2) {
+	if (doctor == -1 || players[doctor].getStatus()==2) {
 		return 100;
 	}
 
