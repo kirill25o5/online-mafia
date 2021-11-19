@@ -120,7 +120,7 @@ int Game::voting()
 	do {
 		votes.assign(players.size(), 0);
 		for (auto &player : players) {
-			if (player.getPlayerRole() == 2) continue;
+			if (player.getStatus() == 2) continue;
 			do {
 				player.vote(vote);
 			} while (validateNameAndGetID(vote)==100);
