@@ -327,9 +327,9 @@ void waiting_for_message(SOCKET ConnectSocket, std::vector<std::pair<std::string
     {
         vote(ConnectSocket, morning_status, recvbuf, recvbuf_len, my_role);
     }
-    else if ((recvbuf[0] >= '0') && (recvbuf[0] <= '9'))
+    else if (recvbuf[0] == 'k')
     {
-        std::cout << "During the voting we desided to kill\n" << morning_status[recvbuf[0] - 48].first;
+        std::cout << "During the voting we desided to kill\n" << morning_status[recvbuf[1] - 48].first;
     }
     else if (recvbuf[0] == 'i')
     {
