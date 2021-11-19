@@ -186,7 +186,7 @@ int connectionToClientsAndStartGame(std::vector<Player>& players, int numberOfPl
     for (auto player : players) {
         sendBuf = "sa" + std::to_string(numberOfPlayers) + "r" + std::to_string(player.getPlayerRole()) + "i0" + playersNames;
         if (!player.getIsAdmin()) {
-            iSendResult = send(ClientSocket, sendBuf.c_str(), sendBuf.size() + 1, 0);
+            iSendResult = send(player.getSocket(), sendBuf.c_str(), sendBuf.size() + 1, 0);
             if (iSendResult == SOCKET_ERROR) {
                 printf("send failed with error: %d\n", WSAGetLastError());
                 closesocket(ClientSocket);
@@ -211,4 +211,19 @@ int closeAllConections(const std::vector<Player>& players) {
     }
     WSACleanup();
     return 0;
+}
+
+void showPlayerRole(std::vector<Player>& players) {
+    switch (players.back().getPlayerRole()) {
+    case 0:
+        std::cout << "\nYou're the villian\n";
+        break;
+    case 1:
+        std::cout << "\nYou're the police\n";
+        break;
+    case 2:
+        std::cout << "\nYou're the doctor\n";
+    case 3:
+        std::cout << "\nYou're the mafia\n";
+    }
 }

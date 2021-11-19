@@ -38,7 +38,6 @@ int Player::setAwakeStatus()
 
 int Player::vote(std::string& suspect)
 {
-	if (playerRole == 2) return 100;
 	if (!isAdmin) {
 		std::string sendBuf = "V";
 		int iSendResult;
@@ -69,7 +68,7 @@ int Player::vote(std::string& suspect)
 		delete[] recvBuf;
 	}
 	else {
-		std::cout << "Enter name of suspect\n";
+		std::cout << "\nEnter name of suspect\n";
 		std::cin >> suspect;
 	}
 	return 0;
@@ -108,7 +107,7 @@ int Player::action(std::string& actionTarget)
 		delete[] recvBuf;
 	}
 	else {
-		std::cout << "Enter name of Target person";
+		std::cout << "\nEnter name of Target person\n";
 		std::cin >> actionTarget;
 	}
 	return 0;

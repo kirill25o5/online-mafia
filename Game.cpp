@@ -4,20 +4,27 @@
 
 int Game::checkGameStatus()
 {
-	int mafiaPlayers = 0;
-	int otherPlayers = 0;
-	for (auto player : players) {
+	int mafiaPlayersDead = 0, mafiaPlayerAlive=0;
+	int otherPlayersDead = 0, otherPlayersAlive=0;
+	for (auto &player : players) {
+		if (player.getPlayerRole() == 3 && player.getStatus() != 2) {
+			mafiaPlayerAlive++;
+		}
+		if (player.getPlayerRole() != 3 && player.getStatus() != 2) {
+			otherPlayersAlive++;
+		}
+
 		
 		if (player.getPlayerRole() == 3 && player.getStatus() == 2) {
-			mafiaPlayers++;
+			mafiaPlayersDead++;
 		}
 		if (player.getPlayerRole() != 3 && player.getStatus() == 2) {
-			otherPlayers++;
+			otherPlayersDead++;
 		}
 	}
 
-	if (mafiaPlayers == mafia.size()) return 1;
-	if (otherPlayers == players.size() - mafia.size()) return 2;
+	if (mafiaPlayersDead == mafia.size()) return 1;
+	if (otherPlayersDead == (players.size() - mafia.size()) || (mafiaPlayerAlive==1 && otherPlayersAlive==1)) return 2;
 	return 0;
 }
 
@@ -37,16 +44,16 @@ void Game::showAdminMorningInfo()
 
 
 	if (lastDeath != -1) {
-		std::cout << "Was killed by mafia tonight: "<< players[lastDeath].getPlayerName()<<"\n";
+		std::cout << "Was killed by mafia tonight: "<< players[lastDeath].getPlayerName()<<"\n\n";
 	}
 	else {
-		std::cout << "Nobody was killed by mafia\n";
+		std::cout << "Nobody was killed by mafia\n\n";
 	}
 }
 
 void Game::allWakeUp() {
-	for (auto player : players) {
-		if (player.getStatus() != 2 && !player.getIsAdmin()) {
+	for (auto &player : players) {
+		if (player.getStatus() == 3 && !player.getIsAdmin()) {
 			player.setAwakeStatus();
 		}
 	}
@@ -60,7 +67,7 @@ void Game::sendMorningStatus()
 	}
 
 
-	for (auto player : players) {
+	for (auto &player : players) {
 		int iSendResult;
 		if (!player.getIsAdmin()) {
 			iSendResult = send(player.getSocket(), sendBuf.c_str(), sendBuf.size() + 1, 0);
@@ -107,17 +114,17 @@ int Game::validateNameAndGetID(std::string playerName)
 
 int Game::voting()
 {
-	std::vector<int> votes(players.size(),0);
+	std::vector<int> votes;
 	std::string vote;
 	std::vector<int>::iterator max;
 	do {
-		votes.assign(7, 0);
-		for (auto player : players) {
-			if (player.getPlayerRole() != 2) continue;
+		votes.assign(players.size(), 0);
+		for (auto &player : players) {
+			if (player.getPlayerRole() == 2) continue;
 			do {
 				player.vote(vote);
 			} while (validateNameAndGetID(vote)==100);
-			votes[validateNameAndGetID(vote)] += 1;
+			votes[validateNameAndGetID(vote)] ++;
 		}
 		max = std::max_element(votes.begin(), votes.end());
 	} while (std::find(max + 1, votes.end(), *max) != votes.end());
@@ -153,6 +160,7 @@ Game::Game(std::vector<Player>& players):players(players), police(-1), doctor(-1
 void Game::startGame() {
 	while(checkGameStatus()==0) {
 		night();
+		if (checkGameStatus() == 2) break;
 		day();
 	}
 	if (checkGameStatus() == 1) std::cout << "others win";
@@ -161,8 +169,8 @@ void Game::startGame() {
 
 void Game::allSleep()
 {
-	for (auto player : players) {
-		if(player.getStatus()!=2 && !player.getIsAdmin())
+	for (auto &player : players) {
+		if(player.getStatus()!=2)
 			player.setSleepStatus();
 	}
 }
@@ -192,7 +200,7 @@ int Game::mafiaAction()
 int Game::policeAction()
 {
 
-	if (players[police].getPlayerRole() == 2) return 100;
+	if (players[police].getPlayerRole() == 2 || police == -1) return 100;
 	std::string suspect_str;
 	int suspect;
 	do {
@@ -218,7 +226,7 @@ int Game::policeAction()
 		}
 	}
 	else {
-		std::cout << sendBuf;
+		std::cout << sendBuf<<"\n";
 	}
 
 	return suspect;
@@ -242,12 +250,13 @@ int Game::doctorAction()
 void Game::night()
 {
 	allSleep();
-	std::cout << "You're sleeping";
+	
 
 	int killedByMafiaID = mafiaAction();
 	int suspectID = policeAction();
 	int curedID = doctorAction();
 	
+
 	lastDeath = -1;
 	if (killedByMafiaID == curedID && killedByMafiaID!=100) 
 		players[killedByMafiaID].setKilledAndHealthedStatus();
@@ -260,20 +269,20 @@ void Game::night()
 
 void Game::day()
 {
+	allWakeUp();
+
 	sendMorningStatus();
 
 	showAdminMorningInfo();
 
-	allWakeUp();
-
-	std::cout << "Voting is started";
+	std::cout << "\nVoting is started\n";
 
 	int dead = voting();
 
-	std::cout << players[dead].getPlayerName() << " was killed by voting";
+	std::cout << players[dead].getPlayerName() << " was killed by voting\n";
 
-	std::string sendBuf = std::to_string(dead);
-	for (auto player : players) {
+	std::string sendBuf = "k"+std::to_string(dead);
+	for (auto &player : players) {
 		int iSendResult;
 		if (!player.getIsAdmin()) {
 			iSendResult = send(player.getSocket(), sendBuf.c_str(), sendBuf.size() + 1, 0);

@@ -52,7 +52,7 @@ int __cdecl main()
         std::cout << "start game\n";
 
         showPlayers(players);
-        std::cout << players.back().getPlayerRole() << "\n";
+        showPlayerRole(players);
 
         Game game(players);
         game.startGame();

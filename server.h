@@ -38,3 +38,5 @@ int connectionToClientsAndStartGame(std::vector<Player>& players, int numberOfPl
 void showPlayers(std::vector<Player>& players);
 
 int closeAllConections(const std::vector<Player>& players);
+
+void showPlayerRole(std::vector<Player>& players);
